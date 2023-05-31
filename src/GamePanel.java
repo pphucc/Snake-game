@@ -3,30 +3,41 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.List;
-
 import java.util.ArrayList;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener {
 
+    // Constants
     static final int SCREEN_WIDTH = 600;
     static final int SCREEN_HEIGHT = 600;
     static final int UNIT_SIZE = 25;
     static final int GAME_UNITS = (SCREEN_HEIGHT * SCREEN_WIDTH) / UNIT_SIZE;
     static int DELAY = 100;
-    static int difficulty = 1;
-    final int x[] = new int[GAME_UNITS];
-    final int y[] = new int[GAME_UNITS];
-    int bodyParts = 6;
-    int applesEaten;
-    int appleX;
-    int appleY;
-    char direction = 'R';
-    boolean running = false;
-    boolean special = false;
-    Timer timer;
-    Random random;
-    JFrame gameFrame;
+
+    // Game states and options
+    enum GameState {
+        MENU, PLAYING, PAUSED, GAME_OVER
+    }
+
+    enum Difficulty {
+        EASY, MEDIUM, HARD
+    }
+
+    // Game variables
+    private int[] x = new int[GAME_UNITS];
+    private int[] y = new int[GAME_UNITS];
+    private int bodyParts = 6;
+    private int applesEaten;
+    private int appleX;
+    private int appleY;
+    private char direction = 'R';
+    private boolean running = false;
+    private boolean special = false;
+    private Timer timer;
+    private Random random;
+    private GameState gameState;
+    private Difficulty difficulty;
 
     public GamePanel() {
         random = new Random();
@@ -34,56 +45,25 @@ public class GamePanel extends JPanel implements ActionListener {
         this.setBackground(Color.BLACK);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
-        startGame();
+        gameState = GameState.MENU;
     }
 
     public void startGame() {
+        resetGame();
         newApple();
         running = true;
         timer = new Timer(DELAY, this);
         timer.start();
     }
 
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        draw(g);
-    }
-
-    public void draw(Graphics g) {
-        if (running) {
-            // for (int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
-            // g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
-            // g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
-            // }
-            g.setColor(Color.red);
-            if (applesEaten % 4 == 0 && applesEaten > 0) {
-                g.setColor(Color.white);
-                g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-                special = true;
-            } else {
-                g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-                special = false;
-            }
-
-            for (int i = 0; i < bodyParts; i++) {
-                if (i == 0) {
-                    g.setColor(Color.green);
-                    g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
-                } else {
-                    // g.setColor(new Color(45, 180, 0));
-                    g.setColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
-                    g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
-                }
-            }
-
-            g.setColor(Color.red);
-            g.setFont(new Font("Ink Free", Font.BOLD, 30));
-            FontMetrics metrics = getFontMetrics(g.getFont());
-            g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics.stringWidth("Score: " + applesEaten)) / 2,
-                    g.getFont().getSize());
-        } else {
-            gameOver(g);
-        }
+    public void resetGame() {
+        bodyParts = 6;
+        applesEaten = 0;
+        direction = 'R';
+        x = new int[GAME_UNITS];
+        y = new int[GAME_UNITS];
+        x[0] = 0;
+        y[0] = 0;
     }
 
     public void newApple() {
@@ -114,22 +94,6 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    // public void newApple() {
-    // boolean appleOnSnake;
-    // do {
-    // appleX = random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
-    // appleY = random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
-
-    // appleOnSnake = false;
-    // for (int i = 0; i < bodyParts; i++) {
-    // if (x[i] == appleX && y[i] == appleY) {
-    // appleOnSnake = true;
-    // break;
-    // }
-    // }
-    // } while (appleOnSnake);
-    // }
-
     public void move() {
         for (int i = bodyParts; i > 0; i--) {
             x[i] = x[i - 1];
@@ -156,42 +120,27 @@ public class GamePanel extends JPanel implements ActionListener {
             if (special) {
                 bodyParts += 5;
                 applesEaten += 5;
-
             } else {
                 bodyParts++;
                 applesEaten++;
             }
             newApple();
         }
-
     }
 
     public void checkCollision() {
-        // check if head collides with body
         for (int i = bodyParts; i > 0; i--) {
             if ((x[0] == x[i] && y[0] == y[i])) {
                 running = false;
+                gameState = GameState.GAME_OVER;
             }
         }
-        // these will not allow go through border
-        // check if head collides left border
-        // if (x[0] < 0) {
+
+        // if (x[0] < 0 || x[0] >= SCREEN_WIDTH || y[0] < 0 || y[0] >= SCREEN_HEIGHT) {
         // running = false;
-        // }
-        // // check if head collides right border
-        // if (x[0] > SCREEN_WIDTH) {
-        // running = false;
-        // }
-        // // check if head collides top border
-        // if (y[0] < 0) {
-        // running = false;
-        // }
-        // // check if head collides bottom border
-        // if (y[0] > SCREEN_HEIGHT) {
-        // running = false;
+        // gameState = GameState.GAME_OVER;
         // }
 
-        // this will allow go through border
         if (x[0] < 0) {
             x[0] = SCREEN_WIDTH - UNIT_SIZE;
         }
@@ -210,12 +159,119 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    public void gameOver(Graphics g) {
-        // Game over text
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (gameState == GameState.MENU) {
+            drawMenu(g);
+        } else if (gameState == GameState.PLAYING || gameState == GameState.PAUSED) {
+            drawGame(g);
+        } else if (gameState == GameState.GAME_OVER) {
+            drawGameOver(g);
+        }
+    }
+
+    public void drawMenu(Graphics g) {
+        g.setColor(Color.white);
+        g.setFont(new Font("Ink Free", Font.BOLD, 40));
+        FontMetrics metrics = getFontMetrics(g.getFont());
+        g.drawString("Snake Game", (SCREEN_WIDTH - metrics.stringWidth("Snake Game")) / 2, SCREEN_HEIGHT / 2 - 100);
+
+        g.setFont(new Font("Ink Free", Font.BOLD, 30));
+        metrics = getFontMetrics(g.getFont());
+        g.drawString("Choose Difficulty:", (SCREEN_WIDTH - metrics.stringWidth("Choose Difficulty:")) / 2,
+                SCREEN_HEIGHT / 2);
+
+        g.setFont(new Font("Ink Free", Font.BOLD, 20));
+        metrics = getFontMetrics(g.getFont());
+        g.drawString("Press 1 for Easy", (SCREEN_WIDTH - metrics.stringWidth("Press 1 for Easy")) / 2,
+                SCREEN_HEIGHT / 2 + 50);
+        g.drawString("Press 2 for Medium", (SCREEN_WIDTH - metrics.stringWidth("Press 2 for Medium")) / 2,
+                SCREEN_HEIGHT / 2 + 80);
+        g.drawString("Press 3 for Hard", (SCREEN_WIDTH - metrics.stringWidth("Press 3 for Hard")) / 2,
+                SCREEN_HEIGHT / 2 + 110);
+        g.drawString("Press Enter to Start", (SCREEN_WIDTH - metrics.stringWidth("Press Enter to Start")) / 2,
+                SCREEN_HEIGHT / 2 + 200);
+    }
+
+    public void drawGame(Graphics g) {
+        // Draw game components
+        // for (int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
+        // g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
+        // g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
+        // }
+
         g.setColor(Color.red);
-        g.setFont(new Font("Ink Free", Font.BOLD, 75));
+        if (applesEaten % 4 == 0 && applesEaten > 0) {
+            g.setColor(Color.white);
+            g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
+            special = true;
+        } else {
+            g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
+            special = false;
+        }
+
+        for (int i = 0; i < bodyParts; i++) {
+            if (i == 0) {
+                g.setColor(Color.green);
+                g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
+            } else {
+                g.setColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
+                g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
+            }
+        }
+
+        // Draw game stats
+        g.setColor(Color.white);
+        g.setFont(new Font("Ink Free", Font.BOLD, 30));
+        FontMetrics metrics = getFontMetrics(g.getFont());
+        g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics.stringWidth("Score: " + applesEaten)) / 2,
+                g.getFont().getSize());
+
+        if (gameState == GameState.PAUSED) {
+            g.setColor(Color.white);
+            g.setFont(new Font("Ink Free", Font.BOLD, 40));
+            metrics = getFontMetrics(g.getFont());
+            g.drawString("Paused", (SCREEN_WIDTH - metrics.stringWidth("Paused")) / 2, SCREEN_HEIGHT / 2);
+            g.drawString("Press Enter to Resume", (SCREEN_WIDTH - metrics.stringWidth("Press Enter to Resume")) / 2,
+                    SCREEN_HEIGHT / 2 + 50);
+            g.drawString("Press M to Return to Menu",
+                    (SCREEN_WIDTH - metrics.stringWidth("Press M to Return to Menu")) / 2,
+                    SCREEN_HEIGHT / 2 + 100);
+        }
+    }
+
+    public void drawGameOver(Graphics g) {
+        g.setColor(Color.red);
+        g.setFont(new Font("Ink Free", Font.BOLD, 40));
         FontMetrics metrics = getFontMetrics(g.getFont());
         g.drawString("Game Over", (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2, SCREEN_HEIGHT / 2);
+
+        g.setColor(Color.white);
+        g.setFont(new Font("Ink Free", Font.BOLD, 30));
+        metrics = getFontMetrics(g.getFont());
+        g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics.stringWidth("Score: " + applesEaten)) / 2,
+                SCREEN_HEIGHT / 2 + 50);
+        g.drawString("Press Enter to Restart", (SCREEN_WIDTH - metrics.stringWidth("Press Enter to Restart")) / 2,
+                SCREEN_HEIGHT / 2 + 100);
+        g.drawString("Press M to Return to Menu", (SCREEN_WIDTH - metrics.stringWidth("Press M to Return to Menu")) / 2,
+                SCREEN_HEIGHT / 2 + 150);
+    }
+
+    public void pauseGame() {
+        if (gameState == GameState.PLAYING) {
+            gameState = GameState.PAUSED;
+            timer.stop();
+            repaint();
+        } else if (gameState == GameState.PAUSED) {
+            gameState = GameState.PLAYING;
+            timer.start();
+        }
+    }
+
+    public void returnToMenu() {
+        gameState = GameState.MENU;
+        resetGame();
+        repaint();
     }
 
     @Override
@@ -228,28 +284,67 @@ public class GamePanel extends JPanel implements ActionListener {
         repaint();
     }
 
-    class MyKeyAdapter extends KeyAdapter {
+    public class MyKeyAdapter extends KeyAdapter {
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_LEFT:
-                    if (direction != 'R') {
-                        direction = 'L';
+                case KeyEvent.VK_ENTER:
+                    if (gameState == GameState.MENU) {
+                        startGame();
+                        gameState = GameState.PLAYING;
+                    } else if (gameState == GameState.PLAYING || gameState == GameState.PAUSED) {
+                        pauseGame();
+                    } else if (gameState == GameState.GAME_OVER) {
+                        gameState = GameState.MENU;
                     }
                     break;
-                case KeyEvent.VK_RIGHT:
-                    if (direction != 'L') {
-                        direction = 'R';
+                case KeyEvent.VK_1:
+                    if (gameState == GameState.MENU) {
+                        difficulty = Difficulty.EASY;
+                        DELAY = 100;
+                        startGame();
+                        gameState = GameState.PLAYING;
+                    }
+                    break;
+                case KeyEvent.VK_2:
+                    if (gameState == GameState.MENU) {
+                        difficulty = Difficulty.MEDIUM;
+                        DELAY = 50;
+                        startGame();
+                        gameState = GameState.PLAYING;
+                    }
+                    break;
+                case KeyEvent.VK_3:
+                    if (gameState == GameState.MENU) {
+                        difficulty = Difficulty.HARD;
+                        DELAY = 10;
+                        startGame();
+                        gameState = GameState.PLAYING;
+                    }
+                    break;
+                case KeyEvent.VK_M:
+                    if (gameState == GameState.GAME_OVER || gameState == GameState.PAUSED) {
+                        returnToMenu();
                     }
                     break;
                 case KeyEvent.VK_UP:
-                    if (direction != 'D') {
+                    if (gameState == GameState.PLAYING && direction != 'D') {
                         direction = 'U';
                     }
                     break;
                 case KeyEvent.VK_DOWN:
-                    if (direction != 'U') {
+                    if (gameState == GameState.PLAYING && direction != 'U') {
                         direction = 'D';
+                    }
+                    break;
+                case KeyEvent.VK_LEFT:
+                    if (gameState == GameState.PLAYING && direction != 'R') {
+                        direction = 'L';
+                    }
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    if (gameState == GameState.PLAYING && direction != 'L') {
+                        direction = 'R';
                     }
                     break;
             }
