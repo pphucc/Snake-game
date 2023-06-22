@@ -201,7 +201,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
         // }
 
-        // draw apple
+        // // draw apple
         g.setColor(Color.red);
         if (applesEaten % 4 == 0 && applesEaten > 0) {
             special = true;
