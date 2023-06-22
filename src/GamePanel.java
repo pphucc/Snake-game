@@ -37,7 +37,6 @@ public class GamePanel extends JPanel implements ActionListener {
     private Timer timer;
     private Random random;
     private GameState gameState;
-    private Difficulty difficulty;
 
     public GamePanel() {
         random = new Random();
@@ -118,8 +117,8 @@ public class GamePanel extends JPanel implements ActionListener {
     public void checkApple() {
         if ((x[0] == appleX) && (y[0] == appleY)) {
             if (special) {
-                bodyParts += 5;
-                applesEaten += 5;
+                bodyParts += 10;
+                applesEaten += 10;
             } else {
                 bodyParts++;
                 applesEaten++;
@@ -172,7 +171,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void drawMenu(Graphics g) {
         g.setColor(Color.white);
-        g.setFont(new Font("Ink Free", Font.BOLD, 40));
+        g.setFont(new Font("Ink Free", Font.BOLD, 80));
         FontMetrics metrics = getFontMetrics(g.getFont());
         g.drawString("Snake Game", (SCREEN_WIDTH - metrics.stringWidth("Snake Game")) / 2, SCREEN_HEIGHT / 2 - 100);
 
@@ -189,6 +188,8 @@ public class GamePanel extends JPanel implements ActionListener {
                 SCREEN_HEIGHT / 2 + 80);
         g.drawString("Press 3 for Hard", (SCREEN_WIDTH - metrics.stringWidth("Press 3 for Hard")) / 2,
                 SCREEN_HEIGHT / 2 + 110);
+        g.drawString("Press 0 for Super Hard", (SCREEN_WIDTH - metrics.stringWidth("Press 0 for Super Hard")) / 2,
+                SCREEN_HEIGHT / 2 + 140);
         g.drawString("Press Enter to Start", (SCREEN_WIDTH - metrics.stringWidth("Press Enter to Start")) / 2,
                 SCREEN_HEIGHT / 2 + 200);
     }
@@ -200,16 +201,18 @@ public class GamePanel extends JPanel implements ActionListener {
         // g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
         // }
 
+        // draw apple
         g.setColor(Color.red);
         if (applesEaten % 4 == 0 && applesEaten > 0) {
+            special = true;
             g.setColor(Color.white);
             g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-            special = true;
         } else {
             g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
             special = false;
         }
 
+        // draw snake
         for (int i = 0; i < bodyParts; i++) {
             if (i == 0) {
                 g.setColor(Color.green);
@@ -242,9 +245,9 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void drawGameOver(Graphics g) {
         g.setColor(Color.red);
-        g.setFont(new Font("Ink Free", Font.BOLD, 40));
+        g.setFont(new Font("Ink Free", Font.BOLD, 60));
         FontMetrics metrics = getFontMetrics(g.getFont());
-        g.drawString("Game Over", (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2, SCREEN_HEIGHT / 2);
+        g.drawString("Game Over", (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2, SCREEN_HEIGHT / 2 - 10);
 
         g.setColor(Color.white);
         g.setFont(new Font("Ink Free", Font.BOLD, 30));
@@ -300,7 +303,6 @@ public class GamePanel extends JPanel implements ActionListener {
                     break;
                 case KeyEvent.VK_1:
                     if (gameState == GameState.MENU) {
-                        difficulty = Difficulty.EASY;
                         DELAY = 100;
                         startGame();
                         gameState = GameState.PLAYING;
@@ -308,7 +310,6 @@ public class GamePanel extends JPanel implements ActionListener {
                     break;
                 case KeyEvent.VK_2:
                     if (gameState == GameState.MENU) {
-                        difficulty = Difficulty.MEDIUM;
                         DELAY = 50;
                         startGame();
                         gameState = GameState.PLAYING;
@@ -316,8 +317,14 @@ public class GamePanel extends JPanel implements ActionListener {
                     break;
                 case KeyEvent.VK_3:
                     if (gameState == GameState.MENU) {
-                        difficulty = Difficulty.HARD;
                         DELAY = 10;
+                        startGame();
+                        gameState = GameState.PLAYING;
+                    }
+                    break;
+                case KeyEvent.VK_0:
+                    if (gameState == GameState.MENU) {
+                        DELAY = 200;
                         startGame();
                         gameState = GameState.PLAYING;
                     }
